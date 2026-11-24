@@ -58,6 +58,12 @@ Testy: use case’y i modele (`kotlin.test`, wspólne dla JVM i iOS), repozytori
 
 **Demo agenta:** `./scripts/create-demo-pr.sh` tworzy gałąź z celowo wadliwym ViewModelem ([`docs/demo`](docs/demo)). Review lokalnie, w ramach abonamentu Claude: `claude "Użyj agenta android-reviewer, żeby przejrzeć zmiany względem main"`.
 
+### Przykładowy wynik agenta
+
+Przegląd gałęzi `demo/bad-code` (Claude Code w ramach abonamentu, 40 s): **12 uwag — 8 high, 4 medium**. Agent sam uruchomił testy przez serwer MCP `android-dev` i poza celowo wstawionymi wadami (GlobalScope, kwoty na `Double`, dane osobowe w logach, połknięty `CancellationException`, reguły biznesowe w ViewModelu) wskazał dwie, których nie planowałem: niezabezpieczone `toDouble()` i duplikację istniejącego `NewClaimViewModel`.
+
+![Wynik agenta android-reviewer](docs/demo/review-example.png)
+
 ## 1. Agent do code review
 
 - **Skill** `android-architecture-review`: proces przeglądu, 4 checklisty (architektura, coroutines, stan i Compose, domena i bezpieczeństwo) i ścisły format wyniku w JSON. Checklisty ładowane są tylko wtedy, gdy dotyczą pliku.
