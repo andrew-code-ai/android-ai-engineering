@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.example.claims.ui.common.ClaimProgressView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/claim_progress"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="4dp"
+    app:activeColor="@color/claim_progress_active"
+    app:inactiveColor="@color/claim_progress_inactive"
+    app:rejectedColor="@color/claim_progress_rejected"
+    app:stepRadius="6dp" />

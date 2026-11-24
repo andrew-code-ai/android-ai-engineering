@@ -28,4 +28,5 @@
     <string name="error_loss_zero">Kwota musi być większa od zera</string>
     <string name="error_description">Opis musi mieć co najmniej 20 znaków</string>
     <string name="error_generic">Nie udało się wysłać zgłoszenia. Spróbuj ponownie.</string>
+    <string name="claim_progress_description">Status zgłoszenia: %1$s</string>
 </resources>

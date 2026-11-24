@@ -27,6 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.view.LayoutInflater
+import com.example.claims.ui.common.ClaimProgressView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.claims.R
@@ -82,6 +85,14 @@ private fun ClaimRow(claim: Claim) {
             }
             Text("${stringResource(claim.type.label())} · ${claim.incidentDate}")
             Text(MoneyFormat.format(claim.estimatedLoss), style = MaterialTheme.typography.bodyLarge)
+            // Widok XML rysowany na Canvas osadzony w Compose (interop).
+            AndroidView(
+                factory = { ctx ->
+                    LayoutInflater.from(ctx).inflate(R.layout.view_claim_progress, null) as ClaimProgressView
+                },
+                update = { view -> view.status = claim.status },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

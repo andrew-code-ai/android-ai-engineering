@@ -47,9 +47,9 @@ claude                             # Claude Code wczyta CLAUDE.md, skill, agenta
 |---|---|
 | `:domain` | **Kotlin Multiplatform** (Android/JVM + iOS): `Money` (grosze, `Long`), `PolicyNumber` (value class z walidacją), reguły zgłoszenia (`ClaimRules`), `SubmitClaimUseCase` z wynikiem jako `sealed interface`, porty repozytoriów; daty przez kotlinx-datetime; framework iOS `ClaimsDomain` — [docs/kmp.md](docs/kmp.md) |
 | `:data` | Room jako źródło prawdy, symulowane API ubezpieczyciela, DataStore (tylko dane niewrażliwe), Hilt, wstrzykiwany `@IoDispatcher` |
-| `:app` | Compose + Material 3, MVVM (`StateFlow<UiState>` + zdarzenia przez `Channel`), Navigation, `collectAsStateWithLifecycle`, `FLAG_SECURE` na ekranach z danymi osobowymi |
+| `:app` | Compose + Material 3, MVVM (`StateFlow<UiState>` + zdarzenia przez `Channel`), Navigation, `collectAsStateWithLifecycle`, `FLAG_SECURE` na ekranach z danymi osobowymi; własny widok XML rysowany na **Canvas** (`ClaimProgressView` — postęp likwidacji) osadzony w Compose przez `AndroidView` |
 
-Testy: use case’y i modele (JUnit), repozytorium (MockK), ViewModel (Turbine + `MainDispatcherRule`), formularz (Compose Test Rule).
+Testy: use case’y i modele (`kotlin.test`, wspólne dla JVM i iOS), repozytorium (MockK), ViewModel (Turbine + `MainDispatcherRule`), formularz (Compose Test Rule), widok Canvas (Espresso).
 
 ```bash
 ./gradlew :domain:jvmTest :data:testDebugUnitTest :app:testDebugUnitTest
