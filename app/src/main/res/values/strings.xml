@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zgłoszenie szkody</string>
+    <string name="claims_title">Moje szkody</string>
+    <string name="claims_empty">Nie masz jeszcze zgłoszonych szkód.</string>
+    <string name="claims_add">Zgłoś szkodę</string>
+    <string name="new_claim_title">Nowe zgłoszenie</string>
+    <string name="back">Wstecz</string>
+    <string name="field_policy">Numer polisy (POL-RRRR-NNNNNNNN)</string>
+    <string name="field_type">Rodzaj szkody</string>
+    <string name="field_date">Data zdarzenia (RRRR-MM-DD)</string>
+    <string name="field_loss">Szacowana kwota szkody (zł)</string>
+    <string name="field_description">Opis zdarzenia</string>
+    <string name="submit">Wyślij zgłoszenie</string>
+    <string name="type_auto">Komunikacyjna</string>
+    <string name="type_home">Mieszkanie</string>
+    <string name="type_travel">Podróż</string>
+    <string name="status_submitted">Przyjęta</string>
+    <string name="status_in_review">W likwidacji</string>
+    <string name="status_accepted">Uznana</string>
+    <string name="status_rejected">Odrzucona</string>
+    <string name="error_policy_format">Nieprawidłowy format numeru polisy</string>
+    <string name="error_policy_inactive">Polisa nie jest aktywna</string>
+    <string name="error_date_format">Podaj datę w formacie RRRR-MM-DD</string>
+    <string name="error_date_future">Data zdarzenia nie może być w przyszłości</string>
+    <string name="error_date_old">Minął termin zgłoszenia szkody (3 lata)</string>
+    <string name="error_loss_format">Podaj kwotę, np. 1250,50</string>
+    <string name="error_loss_zero">Kwota musi być większa od zera</string>
+    <string name="error_description">Opis musi mieć co najmniej 20 znaków</string>
+    <string name="error_generic">Nie udało się wysłać zgłoszenia. Spróbuj ponownie.</string>
+</resources>

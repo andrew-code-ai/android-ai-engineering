@@ -2,7 +2,10 @@ name: AI code review
 
 on:
   pull_request:
-    paths: ["**/*.kt", "**/*.kts"]
+    types: [opened, synchronize, labeled]
+
+# AI review jest płatny (Claude API), więc uruchamia się tylko dla PR z etykietą "ai-review".
+# Testy Androida i bezpieczeństwa działają zawsze i nic nie kosztują.
 
 permissions:
   contents: read
@@ -10,6 +13,7 @@ permissions:
 
 jobs:
   review:
+    if: contains(github.event.pull_request.labels.*.name, 'ai-review')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -53,6 +57,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+
+  android-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew :domain:test :data:testDebugUnitTest :app:testDebugUnitTest lint --stacktrace
 
   masking-tests:
     runs-on: ubuntu-latest

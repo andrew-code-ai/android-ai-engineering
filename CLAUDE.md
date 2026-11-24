@@ -5,13 +5,15 @@ Android app "Zgłoszenie szkody" (claim reporting) + AI engineering toolkit arou
 ## Architecture (non-negotiable)
 - Modules: `:app` (presentation, Compose), `:domain` (pure Kotlin), `:data` (Retrofit/Room/DataStore), `:shared` (KMP, optional).
 - `:domain` has no Android, Retrofit, Room or Hilt imports. Repository interfaces live in `:domain`.
-- ViewModels: constructor-injected use cases/repositories + `CoroutineDispatcher`; expose one `StateFlow<UiState>`; one-off events via `Channel`.
+- ViewModels: constructor-injected use cases; expose one `StateFlow<UiState>`; one-off events via `Channel`; work in `viewModelScope` (tests: `MainDispatcherRule`).
+- Repositories get an injected `@IoDispatcher CoroutineDispatcher` — never hard-coded `Dispatchers.IO`.
 - Money is `Money` (value class on grosze, `Long`). Never `Double`.
 - Business rules (eligibility, limits, thresholds) live in `:domain`.
 - Formatting (currency, dates) only in presentation.
 
 ## Testing
 - Every use case and ViewModel change comes with unit tests: JUnit, MockK, Turbine, `StandardTestDispatcher`.
+- Run: `./gradlew :domain:test :data:testDebugUnitTest :app:testDebugUnitTest` (UI: `:app:connectedDebugAndroidTest`).
 - Prefer fakes over mocks for repositories.
 - UI: Compose Test Rule for critical flows (submit claim).
 

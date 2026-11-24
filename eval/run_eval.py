@@ -28,14 +28,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EVAL = ROOT / "eval"
 sys.path.insert(0, str(EVAL))
-from scoring import aggregate, extract_json, score_case  # noqa: E402
+from scoring import aggregate, score_case  # noqa: E402
 
 SKILL_DIR = ROOT / ".claude" / "skills" / "android-architecture-review"
 VARIANTS = ["baseline", "caching", "routing", "batch"]
 
 TRIAGE_PROMPT = """You triage Kotlin files for an expensive architecture review.
-Answer with JSON only: {"needs_review": true|false, "reason": "<max 15 words>"}.
-needs_review=false ONLY if the file is small, has no state, no coroutines, no I/O, no money,
+Answer by calling the triage_decision tool. needs_review=false ONLY if the file is small, has no state, no coroutines, no I/O, no money,
 no personal data and follows clean architecture. When unsure, answer true."""
 
 
@@ -72,7 +71,8 @@ def review_system_prompt() -> str:
 
 
 def user_message(case: Case) -> str:
-    return (f"Review this file. Line numbers are prefixed as 'NNNN| '. Report `line` using those numbers.\n"
+    return (f"Review this file and report via the report_findings tool (keep text fields short, no code). "
+            f"Line numbers are prefixed as 'NNNN| '. Report `line` using those numbers.\n"
             f"File: {case.path.relative_to(ROOT)}\n\n```kotlin\n{case.numbered}\n```")
 
 
@@ -117,6 +117,62 @@ class CaseRun:
     error: str | None = None
 
 
+# ------------------------------------------------------------------ ustrukturyzowany wynik
+# Model raportuje przez wymuszone wywołanie narzędzia (tool use + tool_choice), więc dostajemy
+# gotowy obiekt zgodny ze schematem — bez parsowania tekstu, w którym kod Kotlina z cudzysłowami
+# psuł JSON. Obcięcie na limicie tokenów (stop_reason == "max_tokens") wykrywamy jawnie.
+
+CATEGORIES = ["architecture", "state", "concurrency", "domain", "error_handling",
+              "testability", "compose", "security", "duplication"]
+
+REVIEW_TOOL = {
+    "name": "report_findings",
+    "description": "Report all review findings for the file. Call exactly once.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "findings": {"type": "array", "items": {
+                "type": "object",
+                "properties": {
+                    "line": {"type": "integer"},
+                    "category": {"type": "string", "enum": CATEGORIES},
+                    "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+                    "title": {"type": "string", "description": "max 12 words"},
+                    "why": {"type": "string", "description": "max 30 words, no code"},
+                    "fix": {"type": "string", "description": "max 25 words, no code"},
+                },
+                "required": ["line", "category", "severity", "title"],
+            }},
+            "summary": {"type": "string"},
+        },
+        "required": ["findings", "summary"],
+    },
+}
+
+TRIAGE_TOOL = {
+    "name": "triage_decision",
+    "description": "Decide whether the file needs the expensive architecture review.",
+    "input_schema": {
+        "type": "object",
+        "properties": {"needs_review": {"type": "boolean"}, "reason": {"type": "string"}},
+        "required": ["needs_review", "reason"],
+    },
+}
+
+
+class Truncated(ValueError):
+    pass
+
+
+def tool_input(msg, tool_name: str) -> dict:
+    if getattr(msg, "stop_reason", None) == "max_tokens":
+        raise Truncated("odpowiedź obcięta na max_tokens — zwiększ max_tokens w config.json")
+    for block in msg.content:
+        if getattr(block, "type", "") == "tool_use" and block.name == tool_name:
+            return dict(block.input)
+    raise ValueError(f"brak wywołania narzędzia {tool_name}")
+
+
 # ------------------------------------------------------------------ klient (prawdziwy lub symulowany)
 
 class LiveClient:
@@ -124,21 +180,34 @@ class LiveClient:
         import anthropic  # importujemy dopiero tutaj — dry-run nie wymaga SDK
         self.api = anthropic.Anthropic()
         self.cfg = cfg
+        self.fatal_errors = (anthropic.AuthenticationError, anthropic.PermissionDeniedError)
+        try:  # preflight: zły klucz wychodzi od razu, a nie po 3 wariantach
+            self.api.models.list(limit=1)
+        except self.fatal_errors as e:
+            raise SystemExit(f"Klucz API odrzucony ({type(e).__name__}). Sprawdź ANTHROPIC_API_KEY "
+                             "(platform.claude.com → API keys) i środki na koncie.") from None
 
-    def params(self, model: str, system: str, user: str, cache: bool, max_tokens: int | None = None) -> dict:
+    def params(self, model: str, system: str, user: str, cache: bool, tool: dict,
+               max_tokens: int | None = None) -> dict:
         block = {"type": "text", "text": system}
-        if cache:
+        if cache:  # cache obejmuje prefiks: definicję narzędzia + prompt systemowy
             block["cache_control"] = {"type": "ephemeral"}
         return {"model": model, "max_tokens": max_tokens or self.cfg["max_tokens"], "system": [block],
+                "tools": [tool], "tool_choice": {"type": "tool", "name": tool["name"]},
                 "messages": [{"role": "user", "content": user}]}
 
-    def call(self, model, system, user, cache, max_tokens=None):
-        resp = self.api.messages.create(**self.params(model, system, user, cache, max_tokens))
-        text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
-        return text, usage_from(resp, model)
+    def call(self, model, system, user, cache, tool, max_tokens=None) -> tuple[dict, Usage]:
+        resp = self.api.messages.create(**self.params(model, system, user, cache, tool, max_tokens))
+        usage = usage_from(resp, model)
+        try:
+            return tool_input(resp, tool["name"]), usage
+        except ValueError as e:
+            e.usage = usage  # koszt nieudanego wywołania też liczymy
+            raise
 
-    def batch(self, requests: list[tuple[str, dict]]) -> dict[str, tuple[str | None, Usage | None, str | None]]:
+    def batch(self, requests: list[tuple[str, dict]]) -> dict[str, tuple[dict | None, Usage | None, str | None]]:
         model_by_id = {cid: params["model"] for cid, params in requests}
+        tool_by_id = {cid: params["tools"][0]["name"] for cid, params in requests}
         created = self.api.messages.batches.create(
             requests=[{"custom_id": cid, "params": params} for cid, params in requests])
         deadline = time.time() + self.cfg["batch_timeout_minutes"] * 60
@@ -152,18 +221,23 @@ class LiveClient:
             time.sleep(self.cfg["batch_poll_seconds"])
         out = {}
         for entry in self.api.messages.batches.results(created.id):
-            if entry.result.type == "succeeded":
-                msg = entry.result.message
-                text = "".join(blk.text for blk in msg.content if getattr(blk, "type", "") == "text")
-                out[entry.custom_id] = (text, usage_from(msg, model_by_id[entry.custom_id], batch=True), None)
-            else:
-                out[entry.custom_id] = (None, None, entry.result.type)
+            cid = entry.custom_id
+            if entry.result.type != "succeeded":
+                out[cid] = (None, None, entry.result.type)
+                continue
+            msg = entry.result.message
+            usage = usage_from(msg, model_by_id[cid], batch=True)
+            try:
+                out[cid] = (tool_input(msg, tool_by_id[cid]), usage, None)
+            except ValueError as e:
+                out[cid] = (None, usage, str(e))
         return out
 
 
 class SimulatedClient(LiveClient):
     """Deterministyczna symulacja — sprawdza pipeline, scoring i raport bez kosztów.
     Liczby z trybu --dry-run NIE są wynikami modelu i raport tak je oznacza."""
+    fatal_errors = ()
 
     def __init__(self, cfg: dict, cases: list[Case]):
         self.cfg = cfg
@@ -177,43 +251,39 @@ class SimulatedClient(LiveClient):
     def _keep(defect_id: str) -> bool:  # ~85% wad "wykrytych", stabilnie między uruchomieniami
         return int(hashlib.md5(defect_id.encode()).hexdigest(), 16) % 100 < 85
 
-    def _fake(self, model, system, user, cache, batch=False):
+    def _fake(self, model, system, user, cache, tool, batch=False) -> tuple[dict, Usage]:
         case = self._case(user)
-        if "triage" in system.lower():
-            needs = bool(case.expected)
-            return json.dumps({"needs_review": needs, "reason": "simulated"}), \
+        if tool["name"] == TRIAGE_TOOL["name"]:
+            return {"needs_review": bool(case.expected), "reason": "simulated"}, \
                 Usage(model, len(system + user) // 4, 20, batch=batch)
         findings = [{"line": d["lines"][0], "category": d["category"], "severity": "medium",
-                     "title": d["title"], "file": case.path.name} for d in case.expected if self._keep(d["id"])]
+                     "title": d["title"]} for d in case.expected if self._keep(d["id"])]
         if not case.expected:
-            findings.append({"line": 3, "category": "style", "severity": "low", "title": "simulated FP"})
+            findings.append({"line": 3, "category": "duplication", "severity": "low", "title": "simulated FP"})
         sys_tokens, user_tokens = len(system) // 4, len(user) // 4
+        out_tokens = 60 * len(findings) + 40
         if cache and self.cache_warm:
-            usage = Usage(model, user_tokens, 60 * len(findings) + 40, 0, sys_tokens, batch)
+            usage = Usage(model, user_tokens, out_tokens, 0, sys_tokens, batch)
         elif cache:
             self.cache_warm = True
-            usage = Usage(model, user_tokens, 60 * len(findings) + 40, sys_tokens, 0, batch)
+            usage = Usage(model, user_tokens, out_tokens, sys_tokens, 0, batch)
         else:
-            usage = Usage(model, sys_tokens + user_tokens, 60 * len(findings) + 40, batch=batch)
-        return json.dumps({"findings": findings, "summary": "simulated"}), usage
+            usage = Usage(model, sys_tokens + user_tokens, out_tokens, batch=batch)
+        return {"findings": findings, "summary": "simulated"}, usage
 
-    def call(self, model, system, user, cache, max_tokens=None):
-        return self._fake(model, system, user, cache)
+    def call(self, model, system, user, cache, tool, max_tokens=None):
+        return self._fake(model, system, user, cache, tool)
 
     def batch(self, requests):
         out = {}
         for cid, p in requests:
-            text, usage = self._fake(p["model"], p["system"][0]["text"], p["messages"][0]["content"],
-                                     "cache_control" in p["system"][0], batch=True)
-            out[cid] = (text, usage, None)
+            data, usage = self._fake(p["model"], p["system"][0]["text"], p["messages"][0]["content"],
+                                     "cache_control" in p["system"][0], p["tools"][0], batch=True)
+            out[cid] = (data, usage, None)
         return out
 
 
 # ------------------------------------------------------------------ warianty
-
-def parse_findings(text: str) -> list[dict]:
-    return extract_json(text).get("findings", [])
-
 
 def run_variant(variant: str, client: LiveClient, cases: list[Case], cfg: dict) -> list[CaseRun]:
     system = review_system_prompt()
@@ -223,29 +293,38 @@ def run_variant(variant: str, client: LiveClient, cases: list[Case], cfg: dict) 
     runs: list[CaseRun] = []
 
     if variant == "batch":
-        reqs = [(c.name, client.params(review_model, system, user_message(c), cache=True)) for c in cases]
-        results = client.batch(reqs)
+        reqs = [(c.name, client.params(review_model, system, user_message(c), cache=True, tool=REVIEW_TOOL))
+                for c in cases]
+        try:
+            results = client.batch(reqs)
+        except client.fatal_errors:
+            raise
+        except Exception as e:
+            return [CaseRun(c.name, [], error=f"batch: {type(e).__name__}: {e}") for c in cases]
         for c in cases:
-            text, usage, err = results.get(c.name, (None, None, "missing"))
-            try:
-                runs.append(CaseRun(c.name, parse_findings(text) if text else [], [usage] if usage else [], error=err))
-            except (ValueError, json.JSONDecodeError) as e:
-                runs.append(CaseRun(c.name, [], [usage] if usage else [], error=f"parse: {e}"))
+            data, usage, err = results.get(c.name, (None, None, "missing"))
+            runs.append(CaseRun(c.name, (data or {}).get("findings", []), [usage] if usage else [], error=err))
         return runs
 
     for c in cases:
         usages: list[Usage] = []
         try:
             if variant == "routing":
-                t_text, t_usage = client.call(triage_model, TRIAGE_PROMPT, user_message(c), cache=False, max_tokens=200)
+                decision, t_usage = client.call(triage_model, TRIAGE_PROMPT, user_message(c), cache=False,
+                                                tool=TRIAGE_TOOL, max_tokens=300)
                 usages.append(t_usage)
-                if not extract_json(t_text).get("needs_review", True):
+                if not decision.get("needs_review", True):
                     runs.append(CaseRun(c.name, [], usages, skipped_by_triage=True))
                     continue
-            text, usage = client.call(review_model, system, user_message(c), cache=variant in ("caching", "routing"))
+            data, usage = client.call(review_model, system, user_message(c),
+                                      cache=variant in ("caching", "routing"), tool=REVIEW_TOOL)
             usages.append(usage)
-            runs.append(CaseRun(c.name, parse_findings(text), usages))
+            runs.append(CaseRun(c.name, data.get("findings", []), usages))
+        except client.fatal_errors:
+            raise
         except Exception as e:  # jeden zły przypadek nie przerywa audytu
+            if getattr(e, "usage", None):
+                usages.append(e.usage)
             runs.append(CaseRun(c.name, [], usages, error=f"{type(e).__name__}: {e}"))
     return runs
 
