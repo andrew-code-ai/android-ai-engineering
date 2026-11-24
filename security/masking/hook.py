@@ -82,7 +82,7 @@ def main() -> int:
         if hit:
             log(event, "block", ["RESTRICTED_PATH"], f"{payload.get('tool_name')}:{hit}")
             print(f"Zablokowano: '{hit}' to dane klasy D (dane klientów) — "
-                  "AI nie może ich odczytywać. Użyj danych syntetycznych z /app/src/test/fixtures.",
+                  "AI nie może ich odczytywać. Użyj danych syntetycznych (fakes w testach).",
                   file=sys.stderr)
             return 2
     return 0

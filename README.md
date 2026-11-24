@@ -16,6 +16,20 @@ Motyw przewodni: aplikacja **„Zgłoszenie szkody”** (Kotlin, Jetpack Compose
 | bash / PowerShell | [`scripts/`](scripts) | ✅ |
 | Aplikacja demo (Compose, Hilt, Room, DataStore, testy) | [`app/`](app), [`domain/`](domain), [`data/`](data) | ✅ |
 
+## Architektura
+
+```mermaid
+flowchart LR
+    dev([Developer]) -->|prompt| hooks{{Hooki: maskowanie danych<br/>blokada wrażliwych plików}}
+    hooks --> cc[Claude Code<br/>CLAUDE.md + skill]
+    cc --> agent[android-reviewer<br/>subagent]
+    agent -->|MCP| mcp[android-dev-mcp<br/>gradle · adb · logcat]
+    mcp --> app[(Aplikacja<br/>:app :domain :data)]
+    agent -->|JSON findings| pr[Komentarz w PR<br/>GitHub Actions]
+    eval[eval/run_eval.py] -->|ten sam skill| api[(Claude API<br/>baseline · cache · routing · batch)]
+    api --> report[raport: recall · precision · koszt]
+```
+
 ## Szybki start
 
 ```bash

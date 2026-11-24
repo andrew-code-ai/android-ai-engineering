@@ -18,7 +18,7 @@ Android app "Zgłoszenie szkody" (claim reporting) + AI engineering toolkit arou
 - UI: Compose Test Rule for critical flows (submit claim).
 
 ## Data & security
-- Only synthetic data in code and tests (`app/src/test/fixtures`). Real customer data never enters the repo or a prompt.
+- Only synthetic data in code and tests (fakes in `domain/src/test`, `app/src/test`). Real customer data never enters the repo or a prompt.
 - Do not read paths in `security/restricted-paths.txt`. Follow `security/AI-usage-policy.md`.
 - No secrets in code, `BuildConfig` or logs. No personal data in logs/analytics.
 
