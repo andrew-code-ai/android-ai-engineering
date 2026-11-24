@@ -26,3 +26,6 @@ build/
 .idea/
 *.iml
 .DS_Store
+
+# Claude Code — lokalne zgody i ustawienia użytkownika
+.claude/settings.local.json

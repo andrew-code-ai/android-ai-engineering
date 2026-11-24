@@ -1,7 +1,7 @@
 ---
 name: android-reviewer
 description: Reviews Android/Kotlin changes (diff, PR or files) for architecture, coroutine, state, Compose, domain and security defects and returns structured JSON findings. Use proactively before committing Android code and in CI on pull requests.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, mcp__android-dev__gradle_test, mcp__android-dev__gradle_lint, mcp__android-dev__gradle_task
 model: sonnet
 ---
 

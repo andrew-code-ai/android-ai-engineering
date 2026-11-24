@@ -11,7 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 /**
  * CELOWO WADLIWY kod — materiał demonstracyjny dla agenta android-reviewer.
@@ -37,7 +39,7 @@ class LegacyClaimViewModel(private val repository: ClaimRepository) : ViewModel(
                         ClaimDraft(
                             PolicyNumber(policy),
                             ClaimType.AUTO,
-                            LocalDate.now(),
+                            Clock.System.todayIn(TimeZone.currentSystemDefault()),
                             Money((withFee * 100).toLong()),
                             description,
                         )
