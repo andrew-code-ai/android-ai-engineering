@@ -1,0 +1,24 @@
+{
+  "file": "CartViewModel.kt",
+  "defects": [
+    {"id": "C01", "lines": [23], "category": "state", "title": "CartItem.quantity is var — mutable entity"},
+    {"id": "C02", "lines": [21, 24, 25], "category": "domain", "title": "Primitive obsession: price as Int cents, category as String"},
+    {"id": "C03", "lines": [29], "category": "architecture", "title": "ViewModel depends on Retrofit"},
+    {"id": "C04", "lines": [32, 72, 79], "category": "state", "title": "Public MutableList + in-place mutation"},
+    {"id": "C05", "lines": [34, 35, 36, 37, 38], "category": "state", "title": "Loose state fields instead of one UiState StateFlow"},
+    {"id": "C06", "lines": [34, 35, 111, 112], "category": "state", "title": "Pre-formatted strings kept in state"},
+    {"id": "C07", "lines": [40, 85], "category": "domain", "title": "Promo code as raw String, no validation"},
+    {"id": "C08", "lines": [42], "category": "architecture", "title": "API created from Retrofit inside ViewModel"},
+    {"id": "C09", "lines": [46, 126], "category": "concurrency", "title": "GlobalScope"},
+    {"id": "C10", "lines": [46, 48, 126, 128], "category": "testability", "title": "Hard-coded dispatchers"},
+    {"id": "C11", "lines": [48, 49, 50, 51], "category": "architecture", "title": "Network call + DTO mapping in ViewModel"},
+    {"id": "C12", "lines": [62, 63, 132, 133], "category": "error_handling", "title": "Generic catch with UI string, swallows cancellation"},
+    {"id": "C13", "lines": [95, 96, 97, 98, 105], "category": "architecture", "title": "Discount business rules in ViewModel"},
+    {"id": "C14", "lines": [90, 91, 92, 97, 102, 105], "category": "domain", "title": "Money as Double"},
+    {"id": "C15", "lines": [108], "category": "domain", "title": "Free-shipping threshold and fee as magic numbers in VM"},
+    {"id": "C16", "lines": [111, 112], "category": "state", "title": "Currency formatting in logic"},
+    {"id": "C17", "lines": [114, 115, 118], "category": "architecture", "title": "Checkout eligibility rule spread in VM"},
+    {"id": "C18", "lines": [121, 122], "category": "architecture", "title": "Callback instead of suspend/state; validation in VM"},
+    {"id": "C19", "lines": [91, 100, 115], "category": "duplication", "title": "Same sums computed in several loops"}
+  ]
+}

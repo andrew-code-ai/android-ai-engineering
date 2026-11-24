@@ -1,0 +1,15 @@
+{
+  "file": "ClaimRepository.kt",
+  "defects": [
+    {"id": "R01", "lines": [26], "category": "security", "title": "Hard-coded production API key"},
+    {"id": "R02", "lines": [31], "category": "security", "title": "Logs whole claim including PESEL"},
+    {"id": "R03", "lines": [34], "category": "security", "title": "PESEL stored in plain SharedPreferences"},
+    {"id": "R04", "lines": [43], "category": "security", "title": "Auth token stored in plain SharedPreferences"},
+    {"id": "R05", "lines": [30], "category": "testability", "title": "Hard-coded Dispatchers.IO"},
+    {"id": "R06", "lines": [36, 37, 38], "category": "error_handling", "title": "Generic catch swallows CancellationException, error type lost (returns null)"},
+    {"id": "R07", "lines": [46], "category": "concurrency", "title": "runBlocking in public API (blocks caller / main thread)"},
+    {"id": "R08", "lines": [47], "category": "error_handling", "title": "!! on stored token, empty token sent to API"},
+    {"id": "R09", "lines": [13, 50, 51], "category": "domain", "title": "Money as Double"},
+    {"id": "R10", "lines": [9, 30, 46], "category": "architecture", "title": "DTO with personal data exposed as domain model, no mapping"}
+  ]
+}

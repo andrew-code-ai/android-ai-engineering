@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Node
+node_modules/
+mcp/android-dev-mcp/dist/
+
+# Sekrety i dane — zgodnie z security/AI-usage-policy.md
+.env
+*.env
+*.keystore
+*.jks
+local.properties
+data/customers/
+data/exports/
+security/logs/
+
+# Wyniki eval (raport report.md commitujemy świadomie po realnym uruchomieniu)
+eval/results/*.json
+
+# Android
+.gradle/
+build/
+.idea/
+*.iml
+.DS_Store

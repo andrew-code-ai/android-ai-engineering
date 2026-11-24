@@ -1,0 +1,19 @@
+{
+  "_comment": "Ceny w USD za 1 mln tokenów. Uzupełnij z aktualnego cennika Anthropic (https://docs.claude.com) przed uruchomieniem — bez nich raport pokaże tokeny, ale nie koszt. Mnożniki cache/batch też zweryfikuj w cenniku.",
+  "models": {
+    "review": "claude-sonnet-5-5",
+    "triage": "claude-haiku-5-5"
+  },
+  "pricing_per_mtok": {
+    "claude-sonnet-5-5": { "input": null, "output": null },
+    "claude-haiku-5-5": { "input": null, "output": null }
+  },
+  "multipliers": {
+    "cache_write": 1.25,
+    "cache_read": 0.1,
+    "batch": 0.5
+  },
+  "max_tokens": 4000,
+  "batch_poll_seconds": 15,
+  "batch_timeout_minutes": 60
+}

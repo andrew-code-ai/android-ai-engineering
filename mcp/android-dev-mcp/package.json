@@ -1,0 +1,20 @@
+{
+  "name": "android-dev-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing allow-listed Android dev tools (Gradle lint/test, adb, logcat) to AI agents",
+  "type": "module",
+  "bin": { "android-dev-mcp": "dist/index.js" },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "node --test dist/*.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "typescript": "5.9.3"
+  }
+}

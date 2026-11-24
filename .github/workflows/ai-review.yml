@@ -1,0 +1,64 @@
+name: AI code review
+
+on:
+  pull_request:
+    paths: ["**/*.kt", "**/*.kts"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Changed Kotlin files
+        id: diff
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.kt' > changed.txt
+          echo "count=$(wc -l < changed.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Run android-reviewer agent (headless)
+        if: steps.diff.outputs.count != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "Use the android-reviewer agent to review these changed files against origin/${{ github.base_ref }}: $(tr '\n' ' ' < changed.txt). Return only the JSON defined in the android-architecture-review skill." \
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Task" \
+            --max-turns 20 \
+            --output-format json > review-raw.json
+
+      - name: Format PR comment
+        if: steps.diff.outputs.count != '0'
+        run: python3 scripts/format_review_comment.py review-raw.json > comment.md
+
+      - name: Post comment
+        if: steps.diff.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+
+  masking-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest && pytest -q security eval/tests

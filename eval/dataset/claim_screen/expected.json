@@ -1,0 +1,71 @@
+{
+  "file": "ClaimListScreen.kt",
+  "defects": [
+    {
+      "id": "S01",
+      "lines": [
+        21
+      ],
+      "category": "compose",
+      "title": "collectAsState instead of collectAsStateWithLifecycle"
+    },
+    {
+      "id": "S02",
+      "lines": [
+        23,
+        24
+      ],
+      "category": "compose",
+      "title": "LaunchedEffect(Unit) ignores changing filter"
+    },
+    {
+      "id": "S03",
+      "lines": [
+        27
+      ],
+      "category": "compose",
+      "title": "Sorting/filtering in composable body without remember — recomputed every recomposition; logic belongs in VM"
+    },
+    {
+      "id": "S04",
+      "lines": [
+        32
+      ],
+      "category": "compose",
+      "title": "LazyColumn items without stable key"
+    },
+    {
+      "id": "S05",
+      "lines": [
+        33,
+        43
+      ],
+      "category": "compose",
+      "title": "ViewModel passed into child composable instead of state + lambdas"
+    },
+    {
+      "id": "S06",
+      "lines": [
+        36
+      ],
+      "category": "architecture",
+      "title": "NavController passed to ViewModel"
+    },
+    {
+      "id": "S07",
+      "lines": [
+        45
+      ],
+      "category": "state",
+      "title": "Amount formatted by string concatenation (no locale/Money formatting)"
+    },
+    {
+      "id": "S08",
+      "lines": [
+        47
+      ],
+      "category": "compose",
+      "title": "Actionable icon without contentDescription (accessibility)"
+    }
+  ]
+}

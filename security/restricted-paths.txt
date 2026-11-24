@@ -1,0 +1,8 @@
+# Ścieżki z danymi klasy D (dane klientów) — AI nie może ich czytać.
+# Wzorce fnmatch względem katalogu projektu. Egzekwuje: security/masking/hook.py
+data/customers/*
+data/exports/*
+*.env
+*.keystore
+*.jks
+local.properties

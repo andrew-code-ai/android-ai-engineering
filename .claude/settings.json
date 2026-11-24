@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/security/masking/hook.py\"" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Glob|Bash",
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/security/masking/hook.py\"" }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Read(./data/customers/**)",
+      "Read(./**/*.keystore)",
+      "Read(./**/*.jks)",
+      "Read(./local.properties)"
+    ]
+  }
+}
