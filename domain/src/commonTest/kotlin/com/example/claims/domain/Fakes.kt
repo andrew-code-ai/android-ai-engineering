@@ -3,7 +3,8 @@ package com.example.claims.domain
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import java.time.Instant
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 class FakeClaimRepository(
     private val activePolicies: Set<String> = setOf(ACTIVE_POLICY),
@@ -21,9 +22,10 @@ class FakeClaimRepository(
         submitted += draft
         val n = submitted.size
         val claim = Claim(
-            id = ClaimId("id-$n"), number = "SZK-2026-%06d".format(n), policyNumber = draft.policyNumber,
-            type = draft.type, incidentDate = draft.incidentDate, estimatedLoss = draft.estimatedLoss,
-            description = draft.description, status = ClaimStatus.SUBMITTED, createdAt = Instant.ofEpochSecond(n.toLong()),
+            id = ClaimId("id-$n"), number = "SZK-2026-" + n.toString().padStart(6, '0'),
+            policyNumber = draft.policyNumber, type = draft.type, incidentDate = draft.incidentDate,
+            estimatedLoss = draft.estimatedLoss, description = draft.description,
+            status = ClaimStatus.SUBMITTED, createdAt = Instant.fromEpochSeconds(n.toLong()),
         )
         store.update { it + claim }
         return claim
@@ -37,4 +39,8 @@ class FakeClaimRepository(
 class FakePreferencesRepository : PreferencesRepository {
     override val lastClaimType = MutableStateFlow(ClaimType.AUTO)
     override suspend fun setLastClaimType(type: ClaimType) { lastClaimType.value = type }
+}
+
+class FixedClock(private val instant: Instant) : Clock {
+    override fun now(): Instant = instant
 }

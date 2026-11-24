@@ -15,7 +15,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.time.Clock
+import kotlinx.datetime.Clock
 import javax.inject.Inject
 
 /** Room jest źródłem prawdy: UI obserwuje bazę, sieć tylko ją aktualizuje. */
@@ -43,7 +43,7 @@ class ClaimRepositoryImpl @Inject constructor(
             estimatedLoss = draft.estimatedLoss,
             description = draft.description,
             status = ClaimStatus.SUBMITTED,
-            createdAt = clock.instant(),
+            createdAt = clock.now(),
         )
         dao.upsert(claim.toEntity())
         claim

@@ -22,17 +22,20 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 class NewClaimViewModelTest {
 
     @get:Rule val main = MainDispatcherRule()
 
-    private val today = LocalDate.of(2026, 11, 24)
-    private val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+    private val today = LocalDate(2026, 11, 24)
+    private val clock = object : Clock {
+        override fun now(): Instant = today.atStartOfDayIn(TimeZone.UTC)
+    }
 
     private class FakeRepo(private val active: Boolean = true) : ClaimRepository {
         var submittedDraft: ClaimDraft? = null
@@ -41,7 +44,7 @@ class NewClaimViewModelTest {
         override suspend fun submit(draft: ClaimDraft): Claim {
             submittedDraft = draft
             return Claim(ClaimId("1"), "SZK-2026-000001", draft.policyNumber, draft.type, draft.incidentDate,
-                         draft.estimatedLoss, draft.description, ClaimStatus.SUBMITTED, Instant.EPOCH)
+                         draft.estimatedLoss, draft.description, ClaimStatus.SUBMITTED, Instant.fromEpochMilliseconds(0))
         }
     }
 
@@ -51,7 +54,7 @@ class NewClaimViewModelTest {
     }
 
     private fun viewModel(repo: ClaimRepository = FakeRepo()) =
-        NewClaimViewModel(SubmitClaimUseCase(repo, FakePrefs(), clock), FakePrefs())
+        NewClaimViewModel(SubmitClaimUseCase(repo, FakePrefs(), clock, TimeZone.UTC), FakePrefs())
 
     private fun NewClaimViewModel.fillValid() {
         onPolicyChange("pol-2024-00012345")

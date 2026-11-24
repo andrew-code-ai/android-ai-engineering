@@ -1,7 +1,7 @@
 package com.example.claims.domain
 
-import java.time.Instant
-import java.time.LocalDate
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 
 /** Kwota w groszach. Nigdy Double — brak błędów zaokrągleń. */
 @JvmInline

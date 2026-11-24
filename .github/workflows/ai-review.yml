@@ -68,7 +68,7 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :domain:test :data:testDebugUnitTest :app:testDebugUnitTest lint --stacktrace
+      - run: ./gradlew :domain:jvmTest :data:testDebugUnitTest :app:testDebugUnitTest lint --stacktrace
 
   masking-tests:
     runs-on: ubuntu-latest

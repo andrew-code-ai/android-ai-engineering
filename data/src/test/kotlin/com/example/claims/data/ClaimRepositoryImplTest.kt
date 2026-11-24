@@ -16,10 +16,9 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 
 class ClaimRepositoryImplTest {
 
@@ -27,7 +26,10 @@ class ClaimRepositoryImplTest {
     private val dao = mockk<ClaimDao>(relaxed = true)
     private val remote = mockk<ClaimsRemoteDataSource>()
     private val now = Instant.parse("2026-11-24T10:00:00Z")
-    private val repo = ClaimRepositoryImpl(dao, remote, Clock.fixed(now, ZoneOffset.UTC), dispatcher)
+    private val clock = object : Clock {
+        override fun now(): Instant = this@ClaimRepositoryImplTest.now
+    }
+    private val repo = ClaimRepositoryImpl(dao, remote, clock, dispatcher)
 
     @Test
     fun `submit stores claim returned by API in local database`() = runTest(dispatcher) {
@@ -36,13 +38,13 @@ class ClaimRepositoryImplTest {
         coEvery { dao.upsert(capture(saved)) } returns Unit
 
         val claim = repo.submit(
-            ClaimDraft(PolicyNumber("POL-2024-00012345"), ClaimType.AUTO, LocalDate.of(2026, 11, 20),
+            ClaimDraft(PolicyNumber("POL-2024-00012345"), ClaimType.AUTO, LocalDate(2026, 11, 20),
                        Money(123_45), "Uszkodzone lusterko na parkingu pod sklepem")
         )
 
         assertEquals("SZK-2026-000001", claim.number)
         assertEquals(12_345L, saved.captured.lossGrosze)
-        assertEquals(now.toEpochMilli(), saved.captured.createdAtMillis)
+        assertEquals(now.toEpochMilliseconds(), saved.captured.createdAtMillis)
         coVerify(exactly = 1) { dao.upsert(any()) }
     }
 }

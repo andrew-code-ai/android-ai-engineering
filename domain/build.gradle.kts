@@ -1,24 +1,31 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// Czysty Kotlin — zero zależności od Androida, Room, Retrofit czy Hilt (reguła z CLAUDE.md).
+// Kotlin Multiplatform: ta sama domena dla Androida (target jvm) i iOS (framework ClaimsDomain).
+// Zero zależności od Androida, Room, Retrofit czy Hilt (reguła z CLAUDE.md).
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    alias(libs.plugins.kotlin.multiplatform)
 }
 
 kotlin {
-    compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
-}
+    jvm {
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+    }
 
-dependencies {
-    api(libs.kotlinx.coroutines.core)
-    implementation(libs.javax.inject)
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "ClaimsDomain"
+            isStatic = true
+        }
+    }
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.turbine)
+    sourceSets {
+        commonMain.dependencies {
+            api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.datetime)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+    }
 }

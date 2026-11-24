@@ -22,7 +22,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import java.time.Clock
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -56,5 +57,8 @@ object DataProviders {
     fun ioDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides @Singleton
-    fun clock(): Clock = Clock.systemDefaultZone()
+    fun clock(): Clock = Clock.System
+
+    @Provides
+    fun timeZone(): TimeZone = TimeZone.currentSystemDefault()
 }

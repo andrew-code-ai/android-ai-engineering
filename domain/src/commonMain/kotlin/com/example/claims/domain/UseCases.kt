@@ -2,9 +2,9 @@ package com.example.claims.domain
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.time.Clock
-import java.time.LocalDate
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import kotlin.coroutines.cancellation.CancellationException
 
 sealed interface SubmitClaimResult {
@@ -14,13 +14,18 @@ sealed interface SubmitClaimResult {
     data class Failed(val cause: Throwable) : SubmitClaimResult
 }
 
-class SubmitClaimUseCase @Inject constructor(
+/**
+ * Bez adnotacji DI — kod wspólny dla iOS. Na Androidzie use case’y tworzy moduł Hilt w :app
+ * (UseCaseModule), na iOS — zwykły konstruktor albo kontener po stronie Swift.
+ */
+class SubmitClaimUseCase(
     private val claims: ClaimRepository,
     private val preferences: PreferencesRepository,
     private val clock: Clock,
+    private val timeZone: TimeZone,
 ) {
     suspend operator fun invoke(draft: ClaimDraft): SubmitClaimResult {
-        val errors = ClaimRules.validate(draft, LocalDate.now(clock))
+        val errors = ClaimRules.validate(draft, clock.todayIn(timeZone))
         if (errors.isNotEmpty()) return SubmitClaimResult.Invalid(errors)
         return try {
             if (!claims.isPolicyActive(draft.policyNumber)) {
@@ -38,7 +43,7 @@ class SubmitClaimUseCase @Inject constructor(
     }
 }
 
-class ObserveClaimsUseCase @Inject constructor(private val claims: ClaimRepository) {
+class ObserveClaimsUseCase(private val claims: ClaimRepository) {
     operator fun invoke(): Flow<List<Claim>> =
         claims.observeClaims().map { list -> list.sortedByDescending { it.createdAt } }
 }

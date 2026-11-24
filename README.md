@@ -15,6 +15,7 @@ Motyw przewodni: aplikacja **„Zgłoszenie szkody”** (Kotlin, Jetpack Compose
 | Integracje MCP | [`.mcp.json`](.mcp.json), własny serwer [`mcp/android-dev-mcp`](mcp/android-dev-mcp), [`docs/mcp.md`](docs/mcp.md) | ✅ z testami |
 | bash / PowerShell | [`scripts/`](scripts) | ✅ |
 | Aplikacja demo (Compose, Hilt, Room, DataStore, testy) | [`app/`](app), [`domain/`](domain), [`data/`](data) | ✅ |
+| Kotlin Multiplatform — współdzielona logika biznesowa | [`domain/`](domain), [`docs/kmp.md`](docs/kmp.md) | ✅ |
 
 ## Architektura
 
@@ -44,14 +45,14 @@ claude                             # Claude Code wczyta CLAUDE.md, skill, agenta
 
 | Moduł | Zawartość |
 |---|---|
-| `:domain` | czysty Kotlin: `Money` (grosze, `Long`), `PolicyNumber` (value class z walidacją), reguły zgłoszenia (`ClaimRules`), `SubmitClaimUseCase` z wynikiem jako `sealed interface`, porty repozytoriów |
+| `:domain` | **Kotlin Multiplatform** (Android/JVM + iOS): `Money` (grosze, `Long`), `PolicyNumber` (value class z walidacją), reguły zgłoszenia (`ClaimRules`), `SubmitClaimUseCase` z wynikiem jako `sealed interface`, porty repozytoriów; daty przez kotlinx-datetime; framework iOS `ClaimsDomain` — [docs/kmp.md](docs/kmp.md) |
 | `:data` | Room jako źródło prawdy, symulowane API ubezpieczyciela, DataStore (tylko dane niewrażliwe), Hilt, wstrzykiwany `@IoDispatcher` |
 | `:app` | Compose + Material 3, MVVM (`StateFlow<UiState>` + zdarzenia przez `Channel`), Navigation, `collectAsStateWithLifecycle`, `FLAG_SECURE` na ekranach z danymi osobowymi |
 
 Testy: use case’y i modele (JUnit), repozytorium (MockK), ViewModel (Turbine + `MainDispatcherRule`), formularz (Compose Test Rule).
 
 ```bash
-./gradlew :domain:test :data:testDebugUnitTest :app:testDebugUnitTest
+./gradlew :domain:jvmTest :data:testDebugUnitTest :app:testDebugUnitTest
 ./gradlew :app:connectedDebugAndroidTest   # emulator / urządzenie
 ```
 

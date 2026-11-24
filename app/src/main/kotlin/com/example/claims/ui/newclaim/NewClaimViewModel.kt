@@ -22,8 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
+import kotlinx.datetime.LocalDate
 import javax.inject.Inject
 
 enum class Field { POLICY, DATE, LOSS, DESCRIPTION }
@@ -101,7 +100,7 @@ class NewClaimViewModel @Inject constructor(
         val policy = PolicyNumber.parse(state.policyNumber)
         val date = try {
             LocalDate.parse(state.incidentDate.trim())
-        } catch (e: DateTimeParseException) {
+        } catch (e: IllegalArgumentException) { // DateTimeFormatException dziedziczy po IllegalArgumentException
             null
         }
         val loss = MoneyFormat.parse(state.loss)
