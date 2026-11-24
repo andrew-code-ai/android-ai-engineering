@@ -1,12 +1,13 @@
 {
-  "_comment": "Ceny w USD za 1 mln tokenów. Uzupełnij z aktualnego cennika Anthropic (https://docs.claude.com) przed uruchomieniem — bez nich raport pokaże tokeny, ale nie koszt. Mnożniki cache/batch też zweryfikuj w cenniku.",
+  "_comment": "USD za 1 mln tokenów, cennik Claude API z 24.11.2026 (platform.claude.com/docs/en/about-claude/pricing). Haiku 5.5: ceny dla promptów do 100 tys. tokenów — powyżej są 5x wyższe. Sonnet 5.5: odczyt z cache = 0,05x ceny wejścia. Batch API: -50% na wejściu i wyjściu, łączy się z cache.",
   "models": {
     "review": "claude-sonnet-5-5",
     "triage": "claude-haiku-5-5"
   },
   "pricing_per_mtok": {
-    "claude-sonnet-5-5": { "input": null, "output": null },
-    "claude-haiku-5-5": { "input": null, "output": null }
+    "claude-sonnet-5-5": { "input": 2.0, "cache_write_5m": 2.5, "cache_read": 0.10, "output": 10.0 },
+    "claude-haiku-5-5": { "input": 0.10, "cache_write_5m": 0.125, "cache_read": 0.01, "output": 0.50 },
+    "claude-opus-5-5": { "input": 4.0, "cache_write_5m": 5.0, "cache_read": 0.20, "output": 20.0 }
   },
   "multipliers": {
     "cache_write": 1.25,

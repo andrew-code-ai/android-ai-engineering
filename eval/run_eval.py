@@ -92,9 +92,11 @@ class Usage:
         if price.get("input") is None or price.get("output") is None:
             return None
         m = cfg["multipliers"]
+        cache_write = price.get("cache_write_5m", price["input"] * m["cache_write"])
+        cache_read = price.get("cache_read", price["input"] * m["cache_read"])
         usd = (self.input_tokens * price["input"]
-               + self.cache_write_tokens * price["input"] * m["cache_write"]
-               + self.cache_read_tokens * price["input"] * m["cache_read"]
+               + self.cache_write_tokens * cache_write
+               + self.cache_read_tokens * cache_read
                + self.output_tokens * price["output"]) / 1_000_000
         return usd * (m["batch"] if self.batch else 1.0)
 
@@ -136,6 +138,7 @@ class LiveClient:
         return text, usage_from(resp, model)
 
     def batch(self, requests: list[tuple[str, dict]]) -> dict[str, tuple[str | None, Usage | None, str | None]]:
+        model_by_id = {cid: params["model"] for cid, params in requests}
         created = self.api.messages.batches.create(
             requests=[{"custom_id": cid, "params": params} for cid, params in requests])
         deadline = time.time() + self.cfg["batch_timeout_minutes"] * 60
@@ -152,7 +155,7 @@ class LiveClient:
             if entry.result.type == "succeeded":
                 msg = entry.result.message
                 text = "".join(blk.text for blk in msg.content if getattr(blk, "type", "") == "text")
-                out[entry.custom_id] = (text, usage_from(msg, msg.model, batch=True), None)
+                out[entry.custom_id] = (text, usage_from(msg, model_by_id[entry.custom_id], batch=True), None)
             else:
                 out[entry.custom_id] = (None, None, entry.result.type)
         return out
